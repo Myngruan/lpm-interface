@@ -1,32 +1,33 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI; 
+using UnityEngine.UI;
 
 namespace grafico
 {
-    public class Longitude : MonoBehaviour
+    public class Inclinacao_Z : MonoBehaviour
     {
-        public Text valorLongitude; 
+        public Text valorInclinacao_Z;
 
-        private mainSerial serialController; 
+        private mainSerial serialController;
 
         private void Start()
         {
-            
+
             serialController = FindObjectOfType<mainSerial>();
-            StartCoroutine(UpdateLongitudeText());
+
+            StartCoroutine(UpdateInclinacaoText());
         }
 
-        private IEnumerator UpdateLongitudeText()
+        private IEnumerator UpdateInclinacaoText()
         {
             while (true)
             {
                 if (serialController != null)
                 {
-                    float lastLongitude = serialController.GetLastLongitude();
+                    float lastInclinacao_Z = serialController.GetLastInclinacao_Z();
 
-                    valorLongitude.text = lastLongitude.ToString("F2") + " º"; 
+                    valorInclinacao_Z.text = lastInclinacao_Z.ToString("F2") + " graus";
 
                     yield return new WaitForSeconds(1f);
                 }

@@ -5,15 +5,15 @@ using UnityEngine;
 using UnityEngine.UI;
 using CodeMonkey.Utils;
 using System.IO.Ports;
-using static grafico.Window_Graph_Pressao;
+using static grafico.Window_Graph_Aceleracao_X;
 
 namespace grafico
 {
 
-    public class Window_Graph_Pressao : MonoBehaviour
+    public class Window_Graph_Aceleracao_X: MonoBehaviour
     {
 
-        private static Window_Graph_Pressao instance;
+        private static Window_Graph_Aceleracao_X instance;
 
         [SerializeField] private Sprite dotSprite;
         private RectTransform graphContainer;
@@ -27,50 +27,42 @@ namespace grafico
         private GameObject tooltipGameObject;
         private List<RectTransform> yLabelList;
 
-        private List<int> valueList;
+        private List<int> dataSeries1 = new List<int>();
+        private List<int> dataSeries2 = new List<int>();
+        private List<Color> lineColors = new List<Color> { Color.magenta, Color.blue }; // Cores das linhas das duas curvas
+
         private IGraphVisual graphVisual;
         private int maxVisibleValueAmount;
         private Func<int, string> getAxisLabelX;
         private Func<float, string> getAxisLabelY;
         private float xSize;
         private bool startYScaleAtZero;
+        
 
-        private float receivedPressao;
-
+        private float receivedAceleracao_X;
 
         private int currentIndex;
         private float updateInterval = 1f; // Intervalo em segundos para atualizar os valores
 
 
+
         private mainSerial serialController;
         public interface IDataReceiver
         {
-            void ReceivePressao(float Pressao);
+            void ReceiveAceleracao_X(float aceleracao_X);
         }
 
         public void ReceiveAltura(float altura)
         {
-
-        }
-        public void ReceiveInclinacao(float altura)
-        {
-
-        }
-        public void ReceiveAceleracao_X(float aceleracao_X)
-        {
             
         }
-        public void ReceiveAceleracao_Y(float aceleracao_Y)
+        public void ReceiveAceleracao_X(float aceleracaox)
         {
-
-        }
-        public void ReceiveAceleracao_Z(float aceleracao_Z)
-        {
-
+            receivedAceleracao_X = aceleracaox;
         }
         public void ReceivePressao(float pressao)
         {
-            receivedPressao = pressao;
+
         }
 
         public void SetSerialController(mainSerial controller)
@@ -90,27 +82,43 @@ namespace grafico
             dashTemplateY = dashContainer.Find("dashTemplateY").GetComponent<RectTransform>();
             tooltipGameObject = graphContainer.Find("tooltip").gameObject;
 
+            List<int> dataSeries1 = new List<int>() { 0, 0, 0, 0, 0 };
+            List<int> dataSeries2 = new List<int>() { 0, 0, 0, 0, 0 };
+
             startYScaleAtZero = true;
             gameObjectList = new List<GameObject>();
             yLabelList = new List<RectTransform>();
             graphVisualObjectList = new List<IGraphVisualObject>();
 
-            IGraphVisual lineGraphVisual = new LineGraphVisual(graphContainer, dotSprite, Color.magenta, new Color(1, 1, 1, .5f));
-            IGraphVisual barChartVisual = new BarChartVisual(graphContainer, Color.white, .8f);
+            IGraphVisual lineGraphVisual1 = new LineGraphVisual(graphContainer, dotSprite, Color.magenta, new Color(1, 1, 1, .5f));
+            IGraphVisual lineGraphVisual2 = new LineGraphVisual(graphContainer, dotSprite, Color.blue, new Color(1, 1, 1, .5f));
+
+            IGraphVisual barChartVisual1 = new BarChartVisual(graphContainer, Color.magenta, .8f);
+            IGraphVisual barChartVisual2 = new BarChartVisual(graphContainer, Color.blue, .8f);
+
 
             HideTooltip();
 
-            List<int> valueList = new List<int>() { 0, 0, 0, 0, 0 };
+            // Mostrar o primeiro gráfico
+            ShowGraph(dataSeries1, lineGraphVisual1, maxVisibleValueAmount, getAxisLabelX, getAxisLabelY);
 
-            ShowGraph(valueList, lineGraphVisual, -1, (int _i) => "s ", (float _f) => Mathf.RoundToInt(_f) + " Pa");
-
-            currentIndex = valueList.Count - 1;// Começar pelo último ponto
+            currentIndex = dataSeries1.Count - 1; // Começar pelo último ponto
 
             FunctionPeriodic.Create(() => {
-                UpdateValues();
-                ShowGraph(valueList, graphVisual, maxVisibleValueAmount, getAxisLabelX, getAxisLabelY);
+                UpdateValues(dataSeries1, ref  currentIndex, receivedAceleracao_X);
+                // Atualizar o primeiro gráfico
+                ShowGraph(dataSeries1, lineGraphVisual1, maxVisibleValueAmount, getAxisLabelX, getAxisLabelY);
             }, updateInterval);
 
+            // Criar um segundo gráfico
+            ShowGraph(dataSeries2, lineGraphVisual2, maxVisibleValueAmount, getAxisLabelX, getAxisLabelY);
+
+            // Iniciar o segundo gráfico
+            FunctionPeriodic.Create(() => {
+                UpdateValues(dataSeries2, ref currentIndex, receivedAceleracao_X);
+                // Atualizar o segundo gráfico
+                ShowGraph(dataSeries2, lineGraphVisual2, maxVisibleValueAmount, getAxisLabelX, getAxisLabelY);
+            }, updateInterval);
         }
 
         public static void ShowTooltip_Static(string tooltipText, Vector2 anchoredPosition)
@@ -149,34 +157,34 @@ namespace grafico
             tooltipGameObject.SetActive(false);
         }
 
-        private void SetGetAxisLabelX(Func<int, string> getAxisLabelX)
+        private void SetGetAxisLabelX(List<int> valueList,Func<int, string> getAxisLabelX)
         {
-            ShowGraph(this.valueList, this.graphVisual, this.maxVisibleValueAmount, getAxisLabelX, this.getAxisLabelY);
+            ShowGraph(valueList, this.graphVisual, this.maxVisibleValueAmount, getAxisLabelX, this.getAxisLabelY);
         }
 
-        private void SetGetAxisLabelY(Func<float, string> getAxisLabelY)
+        private void SetGetAxisLabelY(List<int> valueList,Func<float, string> getAxisLabelY)
         {
-            ShowGraph(this.valueList, this.graphVisual, this.maxVisibleValueAmount, this.getAxisLabelX, getAxisLabelY);
+            ShowGraph(valueList, this.graphVisual, this.maxVisibleValueAmount, getAxisLabelX, this.getAxisLabelY);
         }
 
-        private void IncreaseVisibleAmount()
+        private void IncreaseVisibleAmount(List<int> valueList)
         {
-            ShowGraph(this.valueList, this.graphVisual, this.maxVisibleValueAmount + 1, this.getAxisLabelX, this.getAxisLabelY);
+            ShowGraph(valueList, this.graphVisual, this.maxVisibleValueAmount + 1, this.getAxisLabelX, this.getAxisLabelY);
         }
 
-        private void DecreaseVisibleAmount()
+        private void DecreaseVisibleAmount(List<int> valueList)
         {
-            ShowGraph(this.valueList, this.graphVisual, this.maxVisibleValueAmount - 1, this.getAxisLabelX, this.getAxisLabelY);
+            ShowGraph(valueList, this.graphVisual, this.maxVisibleValueAmount - 1, this.getAxisLabelX, this.getAxisLabelY);
         }
 
-        private void SetGraphVisual(IGraphVisual graphVisual)
+        private void SetGraphVisual( List<int> valueList,IGraphVisual graphVisual)
         {
-            ShowGraph(this.valueList, graphVisual, this.maxVisibleValueAmount, this.getAxisLabelX, this.getAxisLabelY);
+            ShowGraph(valueList, graphVisual, this.maxVisibleValueAmount, this.getAxisLabelX, this.getAxisLabelY);
         }
 
         private void ShowGraph(List<int> valueList, IGraphVisual graphVisual, int maxVisibleValueAmount = -1, Func<int, string> getAxisLabelX = null, Func<float, string> getAxisLabelY = null)
         {
-            this.valueList = valueList;
+            
             this.graphVisual = graphVisual;
             this.getAxisLabelX = getAxisLabelX;
             this.getAxisLabelY = getAxisLabelY;
@@ -224,7 +232,8 @@ namespace grafico
             float graphHeight = graphContainer.sizeDelta.y;
 
             float yMinimum, yMaximum;
-            CalculateYScale(out yMinimum, out yMaximum);
+            CalculateYScale(dataSeries1, out yMinimum, out yMaximum);
+            CalculateYScale(dataSeries2, out yMinimum, out yMaximum);
 
 
             xSize = graphWidth / (maxVisibleValueAmount + 1);
@@ -281,10 +290,10 @@ namespace grafico
             }
         }
 
-        private void UpdateValues()
+        private void UpdateValues(List<int> valueList, ref int currentIndex, float receivedValue)
         {
             // Atualiza apenas o último valor da lista
-            valueList[currentIndex] = Mathf.RoundToInt(receivedPressao);
+            valueList[currentIndex] = Mathf.RoundToInt(receivedValue);
 
             // Propaga os valores para os pontos anteriores
             for (int i = currentIndex + 1; i < valueList.Count; i++)
@@ -296,10 +305,8 @@ namespace grafico
             currentIndex = (currentIndex - 1 + valueList.Count) % valueList.Count;
         }
 
-
-        private void CalculateYScale(out float yMinimum, out float yMaximum)
+        private void CalculateYScale(List<int> valueList, out float yMinimum, out float yMaximum)
         {
-
             yMaximum = valueList[0];
             yMinimum = valueList[0];
 

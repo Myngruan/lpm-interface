@@ -5,9 +5,9 @@ using UnityEngine.UI;
 
 namespace grafico
 {
-    public class Altura : MonoBehaviour
+    public class Deformacao_Bra1 : MonoBehaviour
     {
-        public Text valorAltura; 
+        public Text valorDeformacao_Bra1; 
 
         private mainSerial serialController;
 
@@ -17,19 +17,19 @@ namespace grafico
             serialController = FindObjectOfType<mainSerial>();
 
   
-            StartCoroutine(UpdateVelocityText());
+            StartCoroutine(UpdateDeformacaoText());
         }
 
-        private IEnumerator UpdateVelocityText()
+        private IEnumerator UpdateDeformacaoText()
         {
             while (true)
             {
                 if (serialController != null)
                 {
                    
-                    float lastAltura = serialController.GetLastAltura();
+                    float lastDeformacao_Bra1 = serialController.GetLastDeformacao_Bra1();
 
-                    valorAltura.text = lastAltura.ToString("F2") + " m"; 
+                    valorDeformacao_Bra1.text = lastDeformacao_Bra1.ToString("F2") + " m"; 
 
                     yield return new WaitForSeconds(1f); 
                 }

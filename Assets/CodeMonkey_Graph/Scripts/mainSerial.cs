@@ -89,11 +89,12 @@ namespace grafico
                     Debug.Log("Dados recebidos: " + data); 
                     string[] values = data.Split(',');
 
-                    if (values.Length >= 10) 
+                    if (values.Length >= 3) 
                     {
+                        float pressao = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
+                        float deformacao_bra1 = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
+                        float deformacao_bra2 = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
 
-                        float deformacao_bra1 = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
-                        float deformacao_bra2 = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
                         float inclinacaox = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
                         float inclinacaoy = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
                         float inclinacaoz = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
@@ -102,11 +103,18 @@ namespace grafico
                         float aceleracaoy = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
                         float aceleracaoz = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
 
-                        float pressao = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
+                        float temperatura = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
 
-                        float temperatura = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
-
-                        Debug.Log("Deformacao_braco1: " + deformacao_bra1 + "Deformacao_braco2: " + deformacao_bra2 + "Inclinacao_X: " + inclinacaox + "Inclinacao_Y: " + inclinacaoy + "Inclinacao_Z: " + inclinacaoz+ " Aceleracao_X: " + aceleracaox + " Aceleracao_Y: " + aceleracaoy + " Aceleracao_Z: " + aceleracaoz + " Pressão: " + pressao + "Temperatura" + temperatura );
+                        Debug.Log("Deformacao_braco1: " + deformacao_bra1);
+                        Debug.Log("Deformacao_braco2: " + deformacao_bra2);
+                        Debug.Log("Inclinacao_X: " + inclinacaox);
+                        Debug.Log("Inclinacao_Y: " + inclinacaoy);
+                        Debug.Log("Inclinacao_Z: " + inclinacaoz);
+                        Debug.Log(" Aceleracao_X: " + aceleracaox);
+                        Debug.Log(" Aceleracao_Y: " + aceleracaoy);
+                        Debug.Log(" Aceleracao_Z: " + aceleracaoz);
+                        Debug.Log(" Pressão: " + pressao);
+                        Debug.Log("Temperatura" + temperatura);
 
                         lastDeformacao_Bra1= deformacao_bra1;
                         lastDeformacao_Bra2 = deformacao_bra2;
@@ -133,7 +141,9 @@ namespace grafico
                         graphPressao.ReceivePressao(pressao);
 
                         // Notifica os observadores sobre os dados recebidos
-                        OnDataReceived?.DynamicInvoke(deformacao_bra1, deformacao_bra2, inclinacaox, inclinacaoy, inclinacaoz, aceleracaox, aceleracaoy, aceleracaoz, pressao);
+                        OnDataReceived?.Invoke(pressao, deformacao_bra1, deformacao_bra2);
+                        OnDataReceived?.Invoke(inclinacaox, inclinacaoy, inclinacaoz);
+                        OnDataReceived?.Invoke(aceleracaox, aceleracaoy, aceleracaoz);
                     }
                 }
                 catch (System.Exception ex)

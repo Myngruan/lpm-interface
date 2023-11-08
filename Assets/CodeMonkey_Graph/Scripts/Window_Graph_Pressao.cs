@@ -48,10 +48,7 @@ namespace grafico
             void ReceivePressao(float Pressao);
         }
 
-        public void ReceiveAltura(float altura)
-        {
-
-        }
+       
         public void ReceiveInclinacao(float altura)
         {
 

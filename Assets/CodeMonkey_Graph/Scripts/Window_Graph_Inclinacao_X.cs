@@ -310,6 +310,13 @@ namespace grafico
 
         private void CalculateYScale(List<int> valueList, out float yMinimum, out float yMaximum)
         {
+            if (valueList.Count == 0)
+            {
+                yMinimum = 0;
+                yMaximum = 0;
+                return;
+            }
+
             yMaximum = valueList[0];
             yMinimum = valueList[0];
 

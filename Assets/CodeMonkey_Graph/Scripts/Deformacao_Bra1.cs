@@ -17,10 +17,10 @@ namespace grafico
             serialController = FindObjectOfType<mainSerial>();
 
   
-            StartCoroutine(UpdateDeformacaoText());
+            StartCoroutine(UpdateDeformacao_Bra1Text());
         }
 
-        private IEnumerator UpdateDeformacaoText()
+        private IEnumerator UpdateDeformacao_Bra1Text()
         {
             while (true)
             {
